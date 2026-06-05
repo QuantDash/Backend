@@ -37,3 +37,6 @@ about.txt
 
 api/returns.routes.go
 calc/returns.calc.go
+
+sqlc.yaml
+db
