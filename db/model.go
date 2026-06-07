@@ -1,4 +1,4 @@
-package main
+package db
 
 import (
 	"database/sql"
@@ -23,7 +23,7 @@ type CorporateAction struct {
 	SplitRatio     *float64  `json:"split_ratio"`
 }
 
-func databaseCorpActionToCorpAction(dbCorpAc internaldb.CorporateAction) CorporateAction {
+func DatabaseCorpActionToCorpAction(dbCorpAc internaldb.CorporateAction) CorporateAction {
 	// In Go, a normal float64 variable cannot be "empty/null". If you don't give it a value, Go automatically assigns it a default value of 0.0.
 	// so if we dont use a pointer (*float64) and the dividend is null then it will be assigned 0.0 val to divident amout
 	// but for *float it can be empty/nill as its a pointer hece if nill then we assing null to json corropspoding value for user to see
@@ -66,20 +66,20 @@ type DailyPrice struct {
 	AdjustedVolume *int64    `json:"adjusted_volume"`
 }
 
-func databaseDPriceToDPrice(dbDailyPrice internaldb.DailyPrice) DailyPrice {
+func DatabaseDPriceToDPrice(dbDailyPrice internaldb.DailyPrice) DailyPrice {
 
-	OpenPtr := typeConversionInFloat64Helper(dbDailyPrice.OpenPrice)
-	HighPtr := typeConversionInFloat64Helper(dbDailyPrice.HighPrice)
-	LowPtr := typeConversionInFloat64Helper(dbDailyPrice.LowPrice)
-	ClosePtr := typeConversionInFloat64Helper(dbDailyPrice.ClosePrice)
+	OpenPtr := TypeConversionInFloat64Helper(dbDailyPrice.OpenPrice)
+	HighPtr := TypeConversionInFloat64Helper(dbDailyPrice.HighPrice)
+	LowPtr := TypeConversionInFloat64Helper(dbDailyPrice.LowPrice)
+	ClosePtr := TypeConversionInFloat64Helper(dbDailyPrice.ClosePrice)
 
-	adjOpenPtr := typeConversionInFloat64Helper(dbDailyPrice.AdjustedOpen)
-	adjHighPtr := typeConversionInFloat64Helper(dbDailyPrice.AdjustedHigh)
-	adjLowPtr := typeConversionInFloat64Helper(dbDailyPrice.AdjustedLow)
-	adjClosePtr := typeConversionInFloat64Helper(dbDailyPrice.AdjustedClose)
+	adjOpenPtr := TypeConversionInFloat64Helper(dbDailyPrice.AdjustedOpen)
+	adjHighPtr := TypeConversionInFloat64Helper(dbDailyPrice.AdjustedHigh)
+	adjLowPtr := TypeConversionInFloat64Helper(dbDailyPrice.AdjustedLow)
+	adjClosePtr := TypeConversionInFloat64Helper(dbDailyPrice.AdjustedClose)
 
-	volumePtr := typeConversionInInt64Helper(dbDailyPrice.Volume)
-	adjVolumePtr := typeConversionInInt64Helper(dbDailyPrice.AdjustedVolume)
+	volumePtr := TypeConversionInInt64Helper(dbDailyPrice.Volume)
+	adjVolumePtr := TypeConversionInInt64Helper(dbDailyPrice.AdjustedVolume)
 
 	return DailyPrice{
 		StockID:        dbDailyPrice.StockID,
@@ -110,10 +110,10 @@ func databaseDPriceToDPrice(dbDailyPrice internaldb.DailyPrice) DailyPrice {
 //		return posts
 //	}
 
-func databaseDPricesToDPrices(dbDailyPrices []internaldb.DailyPrice) []DailyPrice {
+func DatabaseDPricesToDPrices(dbDailyPrices []internaldb.DailyPrice) []DailyPrice {
 	prices := []DailyPrice{}
 	for _, dbPrice := range dbDailyPrices {
-		prices = append(prices, databaseDPriceToDPrice(dbPrice))
+		prices = append(prices, DatabaseDPriceToDPrice(dbPrice))
 	}
 	return prices
 }
@@ -125,7 +125,7 @@ type Symbol struct {
 	Status      *string `json:"status"`
 }
 
-func databaseSymbolToSymbol(dbSymbol internaldb.Symbol) Symbol {
+func DatabaseSymbolToSymbol(dbSymbol internaldb.Symbol) Symbol {
 	var cmpNamePtr *string
 	var status *string
 
@@ -144,7 +144,7 @@ func databaseSymbolToSymbol(dbSymbol internaldb.Symbol) Symbol {
 	}
 }
 
-func typeConversionInFloat64Helper(ns sql.NullString) *float64 {
+func TypeConversionInFloat64Helper(ns sql.NullString) *float64 {
 	if ns.Valid {
 		// ParseFloat converts the string "1.50" into a float64 1.50
 		if val, err := strconv.ParseFloat(ns.String, 64); err == nil {
@@ -154,7 +154,7 @@ func typeConversionInFloat64Helper(ns sql.NullString) *float64 {
 	return nil
 }
 
-func typeConversionInInt64Helper(ni sql.NullInt64) *int64 {
+func TypeConversionInInt64Helper(ni sql.NullInt64) *int64 {
 	//no need to convert as instad we already have it as NullInt64 not NullString so we can just return the .Int64 part
 	if ni.Valid {
 		val := ni.Int64
@@ -166,7 +166,7 @@ func typeConversionInInt64Helper(ni sql.NullInt64) *int64 {
 // we use this instead of databaseDPricesToDPricesOnDate like function as we can see in internaldb that its not a dailyprice struct for GetPriceOnDate
 // it is a sql.Nullstring slice so we wrote this function also this can be used for any other col that returns []nullstring so its like a utility function
 // read point about.txt 12 for more
-func databaseNullStringsToFloats(dbStrings []sql.NullString) []float64 {
+func DatabaseNullStringsToFloats(dbStrings []sql.NullString) []float64 {
 	floats := []float64{}
 	for _, ns := range dbStrings {
 		if ns.Valid {
