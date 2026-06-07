@@ -1,7 +1,11 @@
 package main
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/Mannan-Ali/Backend/httputils"
+)
 
 func handlerError(w http.ResponseWriter, r *http.Request) {
-	responseWithError(w, 400, "something went wrong")
+	httputils.ResponseWithError(w, 400, "something went wrong")
 }
