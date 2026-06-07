@@ -8,6 +8,7 @@ import (
 	"github.com/Mannan-Ali/Backend/db/internaldb"
 )
 
+// As this file was in root directory it cannot be imported into other subpackages like api so for that we shifted it into db folder
 // read point 8 in about.txt
 // main reason for creation of this file is we cannot edit internalb/model.go and it reutns nullstring ({adjusted_col: {String: "150.5", Valid: true}})
 // now we cannot use this for our maths and also cannot send it to user so we create this function to convert the model.go messy format to a better format
