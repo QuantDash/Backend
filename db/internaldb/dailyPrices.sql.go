@@ -11,12 +11,55 @@ import (
 	"time"
 )
 
-const getDailyPrices = `-- name: GetDailyPrices :many
-SELECT stock_id, trade_date, open_price, high_price, low_price, close_price, adjusted_open, adjusted_high, adjusted_low, adjusted_close, volume, adjusted_volume FROM daily_prices
+const getDailyPricesByStockInDateRange = `-- name: GetDailyPricesByStockInDateRange :many
+SELECT adjusted_close FROM daily_prices
+WHERE stock_id = ? AND trade_date BETWEEN ? AND ?
+ORDER BY trade_date
 `
 
-func (q *Queries) GetDailyPrices(ctx context.Context) ([]DailyPrice, error) {
-	rows, err := q.db.QueryContext(ctx, getDailyPrices)
+type GetDailyPricesByStockInDateRangeParams struct {
+	StockID       int32
+	FromTradeDate time.Time
+	ToTradeDate   time.Time
+}
+
+func (q *Queries) GetDailyPricesByStockInDateRange(ctx context.Context, arg GetDailyPricesByStockInDateRangeParams) ([]sql.NullString, error) {
+	rows, err := q.db.QueryContext(ctx, getDailyPricesByStockInDateRange, arg.StockID, arg.FromTradeDate, arg.ToTradeDate)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []sql.NullString
+	for rows.Next() {
+		var adjusted_close sql.NullString
+		if err := rows.Scan(&adjusted_close); err != nil {
+			return nil, err
+		}
+		items = append(items, adjusted_close)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getDailyPricesPaginated = `-- name: GetDailyPricesPaginated :many
+SELECT stock_id, trade_date, open_price, high_price, low_price, close_price, adjusted_open, adjusted_high, adjusted_low, adjusted_close, volume, adjusted_volume FROM daily_prices
+ORDER BY stock_id, trade_date
+LIMIT ?
+OFFSET ?
+`
+
+type GetDailyPricesPaginatedParams struct {
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) GetDailyPricesPaginated(ctx context.Context, arg GetDailyPricesPaginatedParams) ([]DailyPrice, error) {
+	rows, err := q.db.QueryContext(ctx, getDailyPricesPaginated, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -41,39 +84,6 @@ func (q *Queries) GetDailyPrices(ctx context.Context) ([]DailyPrice, error) {
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getPricesOnDate = `-- name: GetPricesOnDate :many
-SELECT adjusted_close FROM daily_prices WHERE trade_date 
-BETWEEN ? AND ?
-`
-
-type GetPricesOnDateParams struct {
-	FromTradeDate time.Time
-	ToTradeDate   time.Time
-}
-
-func (q *Queries) GetPricesOnDate(ctx context.Context, arg GetPricesOnDateParams) ([]sql.NullString, error) {
-	rows, err := q.db.QueryContext(ctx, getPricesOnDate, arg.FromTradeDate, arg.ToTradeDate)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []sql.NullString
-	for rows.Next() {
-		var adjusted_close sql.NullString
-		if err := rows.Scan(&adjusted_close); err != nil {
-			return nil, err
-		}
-		items = append(items, adjusted_close)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
