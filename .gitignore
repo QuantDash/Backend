@@ -36,5 +36,3 @@ go.work.sum
 about.txt
 json.go
 calc/MAR.calc.go
-api/drawdown.routes.go
-calc/drawdown.calc.go
