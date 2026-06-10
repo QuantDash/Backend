@@ -5,6 +5,6 @@ LIMIT ?
 OFFSET ?;
 
 -- name: GetDailyPricesByStockInDateRange :many
-SELECT adjusted_close FROM daily_prices
+SELECT adjusted_close,trade_date FROM daily_prices
 WHERE stock_id = ? AND trade_date BETWEEN ? AND ?
 ORDER BY trade_date;

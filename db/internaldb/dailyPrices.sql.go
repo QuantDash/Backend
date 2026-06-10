@@ -12,7 +12,7 @@ import (
 )
 
 const getDailyPricesByStockInDateRange = `-- name: GetDailyPricesByStockInDateRange :many
-SELECT adjusted_close FROM daily_prices
+SELECT adjusted_close,trade_date FROM daily_prices
 WHERE stock_id = ? AND trade_date BETWEEN ? AND ?
 ORDER BY trade_date
 `
@@ -23,19 +23,24 @@ type GetDailyPricesByStockInDateRangeParams struct {
 	ToTradeDate   time.Time
 }
 
-func (q *Queries) GetDailyPricesByStockInDateRange(ctx context.Context, arg GetDailyPricesByStockInDateRangeParams) ([]sql.NullString, error) {
+type GetDailyPricesByStockInDateRangeRow struct {
+	AdjustedClose sql.NullString
+	TradeDate     time.Time
+}
+
+func (q *Queries) GetDailyPricesByStockInDateRange(ctx context.Context, arg GetDailyPricesByStockInDateRangeParams) ([]GetDailyPricesByStockInDateRangeRow, error) {
 	rows, err := q.db.QueryContext(ctx, getDailyPricesByStockInDateRange, arg.StockID, arg.FromTradeDate, arg.ToTradeDate)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []sql.NullString
+	var items []GetDailyPricesByStockInDateRangeRow
 	for rows.Next() {
-		var adjusted_close sql.NullString
-		if err := rows.Scan(&adjusted_close); err != nil {
+		var i GetDailyPricesByStockInDateRangeRow
+		if err := rows.Scan(&i.AdjustedClose, &i.TradeDate); err != nil {
 			return nil, err
 		}
-		items = append(items, adjusted_close)
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

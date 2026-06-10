@@ -163,17 +163,20 @@ func TypeConversionInInt64Helper(ni sql.NullInt64) *int64 {
 	return nil
 }
 
+// This below comment is not much valid now as we changed the function
 // we use this instead of databaseDPricesToDPricesOnDate like function as we can see in internaldb that its not a dailyprice struct for GetPriceOnDate
 // it is a sql.Nullstring slice so we wrote this function also this can be used for any other col that returns []nullstring so its like a utility function
-// read point about.txt 12 for more
-func DatabaseNullStringsToFloats(dbStrings []sql.NullString) []float64 {
+// read point about.txt 12 for more (read this for new func too)
+func DatabasePricesToFloatsAndDates(dbRows []internaldb.GetDailyPricesByStockInDateRangeRow) ([]float64, []time.Time) {
 	floats := []float64{}
-	for _, ns := range dbStrings {
-		if ns.Valid {
-			if val, err := strconv.ParseFloat(ns.String, 64); err == nil {
+	dates := []time.Time{}
+	for _, row := range dbRows {
+		if row.AdjustedClose.Valid {
+			if val, err := strconv.ParseFloat(row.AdjustedClose.String, 64); err == nil {
 				floats = append(floats, val)
+				dates = append(dates, row.TradeDate)
 			}
 		}
 	}
-	return floats
+	return floats, dates
 }

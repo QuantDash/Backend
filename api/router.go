@@ -16,6 +16,7 @@ func NewV1Router(apiCfg *APIConfig) chi.Router {
 
 	// Mount your domain-specific feature routers here
 	r.Mount("/returns", ReturnRoutes(apiCfg))
+	r.Mount("/dd", DrawdownRoute(apiCfg))
 	// r.Mount("/kelly", KellyRouter())       // Create kelly.go later and uncomment
 	// r.Mount("/drawdown", DrawdownRouter()) // Create drawdown.go later and uncomment
 

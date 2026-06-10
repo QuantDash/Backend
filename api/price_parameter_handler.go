@@ -2,9 +2,39 @@ package api
 
 import (
 	"errors"
+	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/Mannan-Ali/Backend/db"
+	"github.com/Mannan-Ali/Backend/db/internaldb"
 )
+
+func (apiCgf *APIConfig) FetchPricehelper(r *http.Request) ([]float64, []time.Time, error) {
+	//parse dates from r (user input)
+	stockIDStr := r.URL.Query().Get("stock_id")
+	startDateStr := r.URL.Query().Get("start_date")
+	endDateStr := r.URL.Query().Get("end_date")
+
+	// handling date errors
+	stockID, startDate, endDate, err := HandlerQueryParams(stockIDStr, startDateStr, endDateStr)
+	if err != nil {
+		return nil, nil, err
+	}
+	//fix the returned format for the adjusted_col to float array/slice so that we can call the periodiccalcreturn func with it
+	dbPrices, err := apiCgf.DB.GetDailyPricesByStockInDateRange(r.Context(),
+		internaldb.GetDailyPricesByStockInDateRangeParams{
+			StockID:       stockID,
+			FromTradeDate: startDate,
+			ToTradeDate:   endDate,
+		})
+	if err != nil {
+		return nil, nil, err
+	}
+	// do return json using the model.go file.
+	cvDbPrices, dbDates := db.DatabasePricesToFloatsAndDates(dbPrices)
+	return cvDbPrices, dbDates, nil
+}
 
 func HandlerQueryParams(stockIDStr, startDateStr, endDateStr string) (int32, time.Time, time.Time, error) {
 
