@@ -67,6 +67,7 @@ func CalculateCAGR(prices []float64, startDate, endDate time.Time) (CAGR, error)
 	//If the time duration is exactly 365.0 days, 365.0 / 365.2425 equals 0.99933 years. When the formula calculates the exponent 1 / 0.99933, it becomes 1.0006 instead of 1.
 	// It is mathematically accepted in quantitative finance because we are strictly normalizing to the astronomical solar year rather than a flat calendar year.
 	totalYears := totalDays / 365.2425
+	//That (1/totalYears) exponent is the Annualizer similar to std deviation we have root 252 for annualizer
 	cagr := math.Pow(prices[len(prices)-1]/prices[0], (1/totalYears)) - 1
 	return CAGR{
 		CAGRValue: cagr,

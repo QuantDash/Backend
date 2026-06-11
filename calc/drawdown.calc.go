@@ -38,7 +38,7 @@ func CalculateMaximumDrawDown(prices []float64, dates []time.Time) (MaxDrawDownR
 		return MaxDrawDownResult{}, errors.New("the length of dates and prices does not match")
 	}
 
-	fmt.Printf("Calculating MaximumDrawDown from %v to %v", dates[0].Format("2006-01-02"), dates[len(dates)-1].Format("2006-01-02"))
+	fmt.Printf("Calculating MaximumDrawDown from %v to %v\n", dates[0].Format("2006-01-02"), dates[len(dates)-1].Format("2006-01-02"))
 	//trackers
 	peakPrice := prices[0]
 	//pointer as if we dont get drawdown then we need null in json
