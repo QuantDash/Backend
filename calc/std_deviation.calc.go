@@ -18,25 +18,25 @@ type StdDeviation struct {
 	AnnualizedVolatility   float64 `json:"annualized_volatility"` // it is StandardDeviationValue/daily volatility * root 252
 }
 
-func CalculateStandardDeviation(prices []float64, startDate, endDate time.Time) (StdDeviation, error) {
+func CalculateStandardDeviation(prices []float64, dates []time.Time) (StdDeviation, error) {
 	if len(prices) < 3 {
 		return StdDeviation{}, errors.New("cannot calculate Standard Deviation: requires at least 3 prices")
 	}
-	dailyReturns, err := CalculatePeriodicReturns(prices, startDate, endDate)
+	dailyReturns, err := CalculatePeriodicReturns(prices, dates)
 	if err != nil {
 		return StdDeviation{}, err
 	}
-	fmt.Printf("Calculating Standard Deviation from: %v to %v\n", startDate.Format("2006-01-02"), endDate.Format("2006-01-02"))
-	n := float64(len(dailyReturns.PerodicReturnVal))
+	fmt.Printf("Calculating Standard Deviation from: %v to %v\n", dates[0].Format("2006-01-02"), dates[len(dates)-1].Format("2006-01-02"))
+	n := float64(len(dailyReturns.PeriodicReturnVal))
 
 	var totalSum float64
-	for _, val := range dailyReturns.PerodicReturnVal {
+	for _, val := range dailyReturns.PeriodicReturnVal {
 		totalSum += val
 	}
 	mean := totalSum / n
 
 	var variance float64
-	for _, val := range dailyReturns.PerodicReturnVal {
+	for _, val := range dailyReturns.PeriodicReturnVal {
 		dif := val - mean
 		variance += (dif * dif)
 	}

@@ -36,3 +36,5 @@ go.work.sum
 about.txt
 json.go
 calc/MAR.calc.go
+api/cagr_to_drawdown_ratio.routes.go
+calc/cagr_to_drawdown_ratio.calc.go
