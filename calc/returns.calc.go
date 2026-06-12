@@ -12,7 +12,7 @@ type CumulativeReturn struct {
 }
 
 type PeriodicReturn struct {
-	PeriodicReturnVal []float64 `json:"periodic_return_value"`
+	PeriodicReturnVal []float64 `json:"daily_returns"`
 }
 
 type CAGR struct {

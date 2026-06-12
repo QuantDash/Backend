@@ -10,7 +10,8 @@ import (
 // read docs to understand what MAR ratio is :
 type CAGRDR struct {
 	CagrToDrawdownratioValue float64 `json:"cagr_to_drawdown_ratio_value"`
-	DurationDays             int64   `json:"duration_days"`
+	TotalCalenderDaysDays    int64   `json:"total_calender_days"`
+	TotalTradingDays         int64   `json:"total_trading_days"`
 }
 
 func CalculateCagrToDrawdownRatio(prices []float64, dates []time.Time) (CAGRDR, error) {
@@ -31,6 +32,7 @@ func CalculateCagrToDrawdownRatio(prices []float64, dates []time.Time) (CAGRDR, 
 
 	return CAGRDR{
 		CagrToDrawdownratioValue: cagrValue.CAGRValue / math.Abs(maxDrawdown.MaxDrawDown),
-		DurationDays:             int64(dates[len(dates)-1].Sub(dates[0]).Hours() / 24.0),
+		TotalCalenderDaysDays:    int64(dates[len(dates)-1].Sub(dates[0]).Hours() / 24.0),
+		TotalTradingDays:         int64(len(dates)),
 	}, nil
 }
