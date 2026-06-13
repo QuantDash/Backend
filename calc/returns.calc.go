@@ -13,6 +13,7 @@ type CumulativeReturn struct {
 
 type PeriodicReturn struct {
 	PeriodicReturnVal []float64 `json:"daily_returns"`
+	Prices            []float64 `json:"prices"`
 }
 
 type CAGR struct {
@@ -46,6 +47,7 @@ func CalculatePeriodicReturns(prices []float64, dates []time.Time) (PeriodicRetu
 	//values are in decimal not yet x by 100, as needed for math in future
 	return PeriodicReturn{
 		PeriodicReturnVal: returns,
+		Prices:            prices,
 	}, nil
 }
 

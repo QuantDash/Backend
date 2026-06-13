@@ -28,7 +28,10 @@ func CalculateSharpeRatio(prices []float64, dates []time.Time, riskFreeRate floa
 	if err != nil {
 		return SharpeRatio{}, err
 	}
-
+	// Safeguard against Division by Zero
+	if stdDeviationVal.AnnualizedVolatility == 0 {
+		return SharpeRatio{}, errors.New("standard deviation is exactly zero; Sharpe ratio is undefined")
+	}
 	annualizedMeanReturn := stdDeviationVal.Mean * 252.0
 	sharpeRatio := (annualizedMeanReturn - riskFreeRate) / stdDeviationVal.AnnualizedVolatility
 

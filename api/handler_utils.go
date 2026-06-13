@@ -14,13 +14,10 @@ import (
 // We created this functions as we are using all this in every routing file.
 
 // Read about  in about.txt point 15
-// 1. Defining the type of function we expect
 type CalcFunc[T any] func(prices []float64, dates []time.Time) (T, error)
 
-// 2. The Helper Function itself
 func HandleCalcRequest[T any](apiCgf *APIConfig, w http.ResponseWriter, r *http.Request, fn CalcFunc[T]) {
 
-	// Step A: Get the data
 	prices, dates, err := apiCgf.HandlerFetchPrice(r)
 	if err != nil {
 		httputils.ResponseWithError(w, 400, err.Error())
@@ -31,14 +28,12 @@ func HandleCalcRequest[T any](apiCgf *APIConfig, w http.ResponseWriter, r *http.
 		return
 	}
 
-	// Step B: Do the math
 	result, err := fn(prices, dates)
 	if err != nil {
 		httputils.ResponseWithError(w, 400, err.Error())
 		return
 	}
 
-	// Step C: Send the response
 	httputils.ResponseWithJSON(w, 200, result)
 }
 

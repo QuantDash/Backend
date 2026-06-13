@@ -50,3 +50,35 @@ func CalculateStandardDeviation(dailyReturns []float64, dates []time.Time) (StdD
 		TotalCalenderDays:      int64(dates[len(dates)-1].Sub(dates[0]).Hours() / 24.0),
 	}, nil
 }
+
+func CalculateStandardDownwardDeviation(dailyReturns []float64, dates []time.Time, target float64) (StdDeviation, error) {
+	if len(dailyReturns) < 2 {
+		return StdDeviation{}, errors.New("cannot calculate Standard Deviation: requires at least 2 returns")
+	}
+	fmt.Printf("Calculating Standard DownwardDeviation from: %v to %v\n", dates[0].Format("2006-01-02"), dates[len(dates)-1].Format("2006-01-02"))
+	n := float64(len(dailyReturns))
+
+	var totalSum float64
+	for _, val := range dailyReturns {
+		totalSum += val
+	}
+	mean := totalSum / n
+
+	var variance float64
+	for _, val := range dailyReturns {
+		diff := val - target
+		if diff < 0.0 {
+			variance += (diff * diff)
+		}
+
+	}
+	variance = variance / n
+	stdDev := math.Sqrt(variance)
+	return StdDeviation{
+		StandardDeviationValue: stdDev,
+		AnnualizedVolatility:   (stdDev * math.Sqrt(252)), //annualized val
+		Mean:                   mean,
+		TotalTradingDays:       int64(len(dates)),
+		TotalCalenderDays:      int64(dates[len(dates)-1].Sub(dates[0]).Hours() / 24.0),
+	}, nil
+}
