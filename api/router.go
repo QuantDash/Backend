@@ -19,8 +19,7 @@ func NewV1Router(apiCfg *APIConfig) chi.Router {
 	r.Mount("/dd", DrawdownRoute(apiCfg))
 	r.Mount("/std", StandardDeviationRoutes(apiCfg))
 	r.Mount("/cagr_to_drawdown_ratio", CAGRToDrawdownRatioRoutes(apiCfg))
-	// r.Mount("/kelly", KellyRouter())       // Create kelly.go later and uncomment
-	// r.Mount("/drawdown", DrawdownRouter()) // Create drawdown.go later and uncomment
+	r.Mount("/sharpe_ratio_value", SharpeRatioRoutes(apiCfg))
 
 	return r
 }
