@@ -22,6 +22,7 @@ func NewV1Router(apiCfg *APIConfig) chi.Router {
 	r.Mount("/sharpe_ratio_value", SharpeRatioRoutes(apiCfg))
 	r.Mount("/sortino_ratio_value", SortinoRatioRoutes(apiCfg))
 	r.Mount("/4_sigma_threshold", SigmaThreshholdRoutes(apiCfg))
+	r.Mount("/kelly_formula", KellyFormulaRoutes(apiCfg))
 
 	return r
 }

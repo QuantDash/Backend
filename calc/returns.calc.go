@@ -23,9 +23,11 @@ type CAGR struct {
 // read point 22 on returns vs log returns.
 func CalculateCumulativeReturns(prices []float64, dates []time.Time) (CumulativeReturn, error) {
 	if len(prices) < 2 {
-		return CumulativeReturn{}, errors.New("cannot calculate returns: requires at least 2 prices")
+		return CumulativeReturn{}, errors.New("cannot calculate returns: requires at least 2 prices or dates")
 	}
-	fmt.Printf("Calculating Cumulative Return from: %v to %v\n", dates[0].Format("2006-01-02"), dates[len(dates)-1].Format("2006-01-02"))
+	if len(dates) > 0 {
+		fmt.Printf("Calculating periodic Return from: %v to %v\n", dates[0].Format("2006-01-02"), dates[len(dates)-1].Format("2006-01-02"))
+	}
 	cumuReturn := (prices[len(prices)-1] - prices[0]) / prices[0]
 	return CumulativeReturn{
 		CumulativeReturnVal: cumuReturn,
@@ -36,7 +38,9 @@ func CalculatePeriodicReturns(prices []float64, dates []time.Time) (PeriodicRetu
 	if len(prices) < 2 {
 		return PeriodicReturn{}, errors.New("cannot calculate periodic returns: requires at least 2 prices")
 	}
-	fmt.Printf("Calculating periodic Return from: %v to %v\n", dates[0].Format("2006-01-02"), dates[len(dates)-1].Format("2006-01-02"))
+	if len(dates) > 0 {
+		fmt.Printf("Calculating periodic Return from: %v to %v\n", dates[0].Format("2006-01-02"), dates[len(dates)-1].Format("2006-01-02"))
+	}
 	returns := make([]float64, len(prices)-1)
 	for i := 1; i < len(prices); i++ {
 		if prices[i-1] == 0.0 {

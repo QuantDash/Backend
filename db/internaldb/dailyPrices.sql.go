@@ -8,6 +8,7 @@ package internaldb
 import (
 	"context"
 	"database/sql"
+	"strings"
 	"time"
 )
 
@@ -86,6 +87,60 @@ func (q *Queries) GetDailyPricesPaginated(ctx context.Context, arg GetDailyPrice
 			&i.Volume,
 			&i.AdjustedVolume,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getMultiStockPricesInDateRange = `-- name: GetMultiStockPricesInDateRange :many
+SELECT stock_id, adjusted_close, trade_date
+FROM daily_prices
+WHERE stock_id IN (/*SLICE:stock_ids*/?) AND trade_date BETWEEN ? AND ?
+ORDER BY stock_id, trade_date
+`
+
+type GetMultiStockPricesInDateRangeParams struct {
+	StockIds      []int32
+	FromTradeDate time.Time
+	ToTradeDate   time.Time
+}
+
+type GetMultiStockPricesInDateRangeRow struct {
+	StockID       int32
+	AdjustedClose sql.NullString
+	TradeDate     time.Time
+}
+
+func (q *Queries) GetMultiStockPricesInDateRange(ctx context.Context, arg GetMultiStockPricesInDateRangeParams) ([]GetMultiStockPricesInDateRangeRow, error) {
+	query := getMultiStockPricesInDateRange
+	var queryParams []interface{}
+	if len(arg.StockIds) > 0 {
+		for _, v := range arg.StockIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:stock_ids*/?", strings.Repeat(",?", len(arg.StockIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:stock_ids*/?", "NULL", 1)
+	}
+	queryParams = append(queryParams, arg.FromTradeDate)
+	queryParams = append(queryParams, arg.ToTradeDate)
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetMultiStockPricesInDateRangeRow
+	for rows.Next() {
+		var i GetMultiStockPricesInDateRangeRow
+		if err := rows.Scan(&i.StockID, &i.AdjustedClose, &i.TradeDate); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

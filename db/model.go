@@ -2,6 +2,9 @@ package db
 
 import (
 	"database/sql"
+	"errors"
+	"fmt"
+	"sort"
 	"strconv"
 	"time"
 
@@ -179,4 +182,94 @@ func DatabasePricesToFloatsAndDates(dbRows []internaldb.GetDailyPricesByStockInD
 		}
 	}
 	return floats, dates
+}
+
+// AlignMultiStockPrices takes raw database rows for multiple stocks and aligns them by date.
+// It returns a 2D slice of prices where rows are stocks and columns are dates,
+// a slice of stock IDs corresponding to the rows, and an error if alignment fails.
+
+// read point 25 and 25.1 in about.txt
+func AlignMultiStockPrices(dbRows []internaldb.GetMultiStockPricesInDateRangeRow) ([][]float64, []int32, error) {
+	if len(dbRows) == 0 {
+		return nil, nil, errors.New("no price data returned from database")
+	}
+
+	// Step 1: Group all prices by stock ID and then by date for quick lookups.
+	pricesByStock := make(map[int32]map[time.Time]float64)
+	stockIDsMap := make(map[int32]struct{})
+
+	for _, row := range dbRows {
+		if !row.AdjustedClose.Valid {
+			continue // Skip rows with null prices
+		}
+
+		price, err := strconv.ParseFloat(row.AdjustedClose.String, 64)
+		if err != nil {
+			continue // Skip rows with unparseable prices
+		}
+
+		// If we see a stock for the first time, initialize its inner map.
+		if _, ok := pricesByStock[row.StockID]; !ok {
+			pricesByStock[row.StockID] = make(map[time.Time]float64)
+		}
+		pricesByStock[row.StockID][row.TradeDate] = price
+		stockIDsMap[row.StockID] = struct{}{}
+	}
+
+	if len(pricesByStock) == 0 {
+		return nil, nil, errors.New("no valid price data found to align")
+	}
+
+	// Create a sorted slice of stock IDs to ensure a consistent output order.
+	stockIDs := make([]int32, 0, len(stockIDsMap))
+	for id := range stockIDsMap {
+		stockIDs = append(stockIDs, id)
+	}
+	sort.Slice(stockIDs, func(i, j int) bool { return stockIDs[i] < stockIDs[j] })
+
+	// Step 2: Find the intersection of dates where ALL stocks have price data.
+	// Start with the dates of the first stock.
+	commonDatesMap := make(map[time.Time]struct{})
+	for date := range pricesByStock[stockIDs[0]] {
+		commonDatesMap[date] = struct{}{}
+	}
+
+	// Filter this set by the dates of all other stocks.
+	for _, id := range stockIDs[1:] {
+		nextCommonDates := make(map[time.Time]struct{})
+		for date := range commonDatesMap {
+			if _, ok := pricesByStock[id][date]; ok {
+				nextCommonDates[date] = struct{}{}
+			}
+		}
+		commonDatesMap = nextCommonDates
+	}
+
+	if len(commonDatesMap) == 0 {
+		return nil, nil, errors.New("no common trading dates found for the selected stocks in the given range")
+	}
+
+	// Edge Case: Ensure there are enough common dates for a statistically meaningful calculation.
+	const minRequiredDataPoints = 64 // Consistent with calc functions (~3 months)
+	if len(commonDatesMap) < minRequiredDataPoints {
+		return nil, nil, fmt.Errorf("insufficient common trading dates for a reliable calculation: found %d, require at least %d", len(commonDatesMap), minRequiredDataPoints)
+	}
+
+	// Convert the map of common dates to a sorted slice.
+	sortedDates := make([]time.Time, 0, len(commonDatesMap))
+	for date := range commonDatesMap {
+		sortedDates = append(sortedDates, date)
+	}
+	sort.Slice(sortedDates, func(i, j int) bool { return sortedDates[i].Before(sortedDates[j]) })
+
+	// Step 3: Build the final, aligned price matrix.
+	alignedPrices := make([][]float64, len(stockIDs))
+	for i, id := range stockIDs {
+		alignedPrices[i] = make([]float64, len(sortedDates))
+		for j, date := range sortedDates {
+			alignedPrices[i][j] = pricesByStock[id][date]
+		}
+	}
+
+	return alignedPrices, stockIDs, nil
 }

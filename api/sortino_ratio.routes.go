@@ -24,7 +24,7 @@ func (apiCgf *APIConfig) handlerCalcSortinoRatio(w http.ResponseWriter, r *http.
 	if targetStr != "" {
 		parsedRate, err := strconv.ParseFloat(targetStr, 64)
 		if err != nil {
-			httputils.ResponseWithError(w, 400, "Invalid risk_free_rate parameter. Must be a valid float.")
+			httputils.ResponseWithError(w, 400, "Invalid risk_free_rate/Target parameter. Must be a valid float.")
 			return
 		}
 		target = parsedRate

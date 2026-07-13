@@ -60,6 +60,10 @@ func (apiCgf *APIConfig) HandlerFetchPrice(r *http.Request) ([]float64, []time.T
 	}
 	// do return json using the model.go file.
 	cvDbPrices, dbDates := db.DatabasePricesToFloatsAndDates(dbPrices)
+	if len(cvDbPrices) == 0 || len(dbDates) == 0 {
+		return nil, nil, errors.New("no price data found in the specified date range")
+	}
+
 	return cvDbPrices, dbDates, nil
 }
 
