@@ -35,3 +35,6 @@ go.work.sum
 
 about.txt
 json.go
+
+db/sql/queires/dailyPrices.sql
+calc/kellys_formula.calc.go

@@ -20,6 +20,7 @@ type CAGR struct {
 	CAGRValue float64 `json:"cagr_value"`
 }
 
+// read point 22 on returns vs log returns.
 func CalculateCumulativeReturns(prices []float64, dates []time.Time) (CumulativeReturn, error) {
 	if len(prices) < 2 {
 		return CumulativeReturn{}, errors.New("cannot calculate returns: requires at least 2 prices")
@@ -52,6 +53,7 @@ func CalculatePeriodicReturns(prices []float64, dates []time.Time) (PeriodicRetu
 }
 
 // read docs understand what CAGR is.
+// read about.txt 21. to understand differnce between cagr and annualized return.
 func CalculateCAGR(prices []float64, dates []time.Time) (CAGR, error) {
 	if len(prices) < 2 {
 		return CAGR{}, errors.New("cannot calculate returns: requires at least 2 prices")
