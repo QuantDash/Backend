@@ -57,15 +57,10 @@ func (apiCgf *APIConfig) handlerCalcSingleKelly(w http.ResponseWriter, r *http.R
 func (apiCgf *APIConfig) handlerCalcMultiKelly(w http.ResponseWriter, r *http.Request) {
 	// Step 1: Parse Parameters
 	params := r.URL.Query()
-	stockIDStrs := params["stock_id"]
+
 	startDateStr := params.Get("start_date")
 	endDateStr := params.Get("end_date")
 	riskFreeRateStr := params.Get("risk_free_rate")
-
-	if len(stockIDStrs) < 2 {
-		httputils.ResponseWithError(w, 400, "at least two stock_id parameters are required for multi-asset Kelly")
-		return
-	}
 
 	riskFreeRate := 0.07 // Default
 	if riskFreeRateStr != "" {
@@ -77,17 +72,18 @@ func (apiCgf *APIConfig) handlerCalcMultiKelly(w http.ResponseWriter, r *http.Re
 		riskFreeRate = parsedRate
 	}
 
-	var stockIDs []int32
-	for _, idStr := range stockIDStrs {
-		id, err := strconv.ParseInt(idStr, 10, 32)
-		if err != nil {
-			httputils.ResponseWithError(w, 400, fmt.Sprintf("invalid stock_id: %s", idStr))
-			return
-		}
-		stockIDs = append(stockIDs, int32(id))
+	stockIDs, err := apiCgf.ResolveSymbols(r)
+	if err != nil {
+		httputils.ResponseWithError(w, 400, err.Error())
+		return
 	}
 
-	_, startDate, endDate, err := HandlerQueryParams("1", startDateStr, endDateStr) // Reuse for date parsing
+	if len(stockIDs) < 2 {
+		httputils.ResponseWithError(w, 400, "Multi-Kelly requires at least 2 valid symbols")
+		return
+	}
+
+	startDate, endDate, err := HandlerQueryParams(startDateStr, endDateStr)
 	if err != nil {
 		httputils.ResponseWithError(w, 400, err.Error())
 		return

@@ -153,3 +153,40 @@ func (q *Queries) GetMultiStockPricesInDateRange(ctx context.Context, arg GetMul
 	}
 	return items, nil
 }
+
+const getStockIdsBySymbols = `-- name: GetStockIdsBySymbols :many
+SELECT stock_id FROM symbols WHERE symbol IN (/*SLICE:symbols*/?)
+`
+
+func (q *Queries) GetStockIdsBySymbols(ctx context.Context, symbols []string) ([]int32, error) {
+	query := getStockIdsBySymbols
+	var queryParams []interface{}
+	if len(symbols) > 0 {
+		for _, v := range symbols {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:symbols*/?", strings.Repeat(",?", len(symbols))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:symbols*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var stock_id int32
+		if err := rows.Scan(&stock_id); err != nil {
+			return nil, err
+		}
+		items = append(items, stock_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

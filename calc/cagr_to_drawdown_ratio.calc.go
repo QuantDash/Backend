@@ -6,7 +6,7 @@ import (
 	"math"
 	"time"
 )
-
+// Managed Account Reports ratio
 // read docs to understand what MAR ratio is :
 type CAGRDR struct {
 	CagrToDrawdownratioValue float64 `json:"cagr_to_drawdown_ratio_value"`

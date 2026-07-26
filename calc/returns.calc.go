@@ -14,6 +14,7 @@ type CumulativeReturn struct {
 type PeriodicReturn struct {
 	PeriodicReturnVal []float64 `json:"daily_returns"`
 	Prices            []float64 `json:"prices"`
+	Dates             []string  `json:"dates"`
 }
 
 type CAGR struct {
@@ -49,10 +50,17 @@ func CalculatePeriodicReturns(prices []float64, dates []time.Time) (PeriodicRetu
 
 		returns[i-1] = (prices[i] - prices[i-1]) / prices[i-1]
 	}
+
+	dateStrings := make([]string, len(dates))
+	for i, d := range dates {
+		dateStrings[i] = d.Format("2006-01-02")
+	}
+
 	//values are in decimal not yet x by 100, as needed for math in future
 	return PeriodicReturn{
 		PeriodicReturnVal: returns,
 		Prices:            prices,
+		Dates:             dateStrings,
 	}, nil
 }
 
