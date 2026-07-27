@@ -1,8 +1,22 @@
--- name: GetDailyPricesPaginated :many
-SELECT * FROM daily_prices
-ORDER BY stock_id, trade_date
-LIMIT ?
-OFFSET ?;
+-- name: GetExplorerStocksPaginated :many
+SELECT 
+    s.symbol, 
+    s.status, 
+    dp.trade_date, 
+    dp.close_price, 
+    dp.adjusted_close, 
+    dp.volume, 
+    dp.adjusted_volume
+FROM symbols s
+JOIN daily_prices dp ON s.stock_id = dp.stock_id
+INNER JOIN (
+    SELECT stock_id, MAX(trade_date) as max_date
+    FROM daily_prices
+    GROUP BY stock_id
+) latest ON dp.stock_id = latest.stock_id AND dp.trade_date = latest.max_date
+ORDER BY s.symbol
+LIMIT ? OFFSET ?;
+
 
 -- name: GetStockIdsBySymbols :many
 SELECT stock_id FROM symbols WHERE symbol IN (sqlc.slice(symbols));

@@ -147,6 +147,50 @@ func DatabaseSymbolToSymbol(dbSymbol internaldb.Symbol) Symbol {
 	}
 }
 
+// this is for displaying stocks details that we want on the website :
+
+// 1. The Clean Struct for JSON
+type StockExplorerItem struct {
+	Symbol         string    `json:"symbol"`
+	Status         *string   `json:"status"`
+	TradeDate      time.Time `json:"trade_date"`
+	ClosePrice     *float64  `json:"close_price"`
+	AdjustedClose  *float64  `json:"adjusted_close"`
+	Volume         *int64    `json:"volume"`
+	AdjustedVolume *int64    `json:"adjusted_volume"`
+}
+
+// 2. The Converter Function
+func DatabaseStockDetailsToStockDetails(dbRawRows []internaldb.GetExplorerStocksPaginatedRow) ([]StockExplorerItem, error) {
+	result := []StockExplorerItem{}
+
+	for _, row := range dbRawRows {
+		// Parse the decimals (sqlc gives these as strings)
+		closePricePtr := TypeConversionInFloat64Helper(row.ClosePrice)
+		adjClosePtr := TypeConversionInFloat64Helper(row.AdjustedClose)
+
+		volumePtr := TypeConversionInInt64Helper(row.Volume)
+		adjVolumePtr := TypeConversionInInt64Helper(row.AdjustedVolume)
+
+		var status *string
+		if row.Status.Valid {
+			status = &row.Status.String
+		}
+		// Append to the clean slice
+		result = append(result, StockExplorerItem{
+			Symbol:         row.Symbol,
+			Status:         status,
+			TradeDate:      row.TradeDate,
+			ClosePrice:     closePricePtr,
+			AdjustedClose:  adjClosePtr,
+			Volume:         volumePtr,
+			AdjustedVolume: adjVolumePtr,
+		})
+	}
+
+	return result, nil
+}
+
 func TypeConversionInFloat64Helper(ns sql.NullString) *float64 {
 	if ns.Valid {
 		// ParseFloat converts the string "1.50" into a float64 1.50

@@ -52,37 +52,55 @@ func (q *Queries) GetDailyPricesByStockInDateRange(ctx context.Context, arg GetD
 	return items, nil
 }
 
-const getDailyPricesPaginated = `-- name: GetDailyPricesPaginated :many
-SELECT stock_id, trade_date, open_price, high_price, low_price, close_price, adjusted_open, adjusted_high, adjusted_low, adjusted_close, volume, adjusted_volume FROM daily_prices
-ORDER BY stock_id, trade_date
-LIMIT ?
-OFFSET ?
+const getExplorerStocksPaginated = `-- name: GetExplorerStocksPaginated :many
+SELECT 
+    s.symbol, 
+    s.status, 
+    dp.trade_date, 
+    dp.close_price, 
+    dp.adjusted_close, 
+    dp.volume, 
+    dp.adjusted_volume
+FROM symbols s
+JOIN daily_prices dp ON s.stock_id = dp.stock_id
+INNER JOIN (
+    SELECT stock_id, MAX(trade_date) as max_date
+    FROM daily_prices
+    GROUP BY stock_id
+) latest ON dp.stock_id = latest.stock_id AND dp.trade_date = latest.max_date
+ORDER BY s.symbol
+LIMIT ? OFFSET ?
 `
 
-type GetDailyPricesPaginatedParams struct {
+type GetExplorerStocksPaginatedParams struct {
 	Limit  int32
 	Offset int32
 }
 
-func (q *Queries) GetDailyPricesPaginated(ctx context.Context, arg GetDailyPricesPaginatedParams) ([]DailyPrice, error) {
-	rows, err := q.db.QueryContext(ctx, getDailyPricesPaginated, arg.Limit, arg.Offset)
+type GetExplorerStocksPaginatedRow struct {
+	Symbol         string
+	Status         sql.NullString
+	TradeDate      time.Time
+	ClosePrice     sql.NullString
+	AdjustedClose  sql.NullString
+	Volume         sql.NullInt64
+	AdjustedVolume sql.NullInt64
+}
+
+func (q *Queries) GetExplorerStocksPaginated(ctx context.Context, arg GetExplorerStocksPaginatedParams) ([]GetExplorerStocksPaginatedRow, error) {
+	rows, err := q.db.QueryContext(ctx, getExplorerStocksPaginated, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []DailyPrice
+	var items []GetExplorerStocksPaginatedRow
 	for rows.Next() {
-		var i DailyPrice
+		var i GetExplorerStocksPaginatedRow
 		if err := rows.Scan(
-			&i.StockID,
+			&i.Symbol,
+			&i.Status,
 			&i.TradeDate,
-			&i.OpenPrice,
-			&i.HighPrice,
-			&i.LowPrice,
 			&i.ClosePrice,
-			&i.AdjustedOpen,
-			&i.AdjustedHigh,
-			&i.AdjustedLow,
 			&i.AdjustedClose,
 			&i.Volume,
 			&i.AdjustedVolume,
