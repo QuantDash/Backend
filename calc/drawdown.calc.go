@@ -21,6 +21,7 @@ For our codebase, raw prices is the right choice. CalculatePeriodicReturns exist
 type MaxDrawDownResult struct {
 	MaxDrawDown float64    `json:"max_drawdown"`
 	TroughDate  *time.Time `json:"trough_date"`
+	PeakDate    *time.Time `json:"peak_date"`
 }
 
 type MaxDrawDownDurationResult struct {
@@ -43,11 +44,13 @@ func CalculateMaximumDrawDown(prices []float64, dates []time.Time) (MaxDrawDownR
 	peakPrice := prices[0]
 	//pointer as if we dont get drawdown then we need null in json
 	var ddDate *time.Time
+	var pPDate = &dates[0]
 	maxDrawDown := 0.0
 
 	for i := 1; i < len(prices); i++ {
 		if prices[i] > peakPrice {
 			peakPrice = prices[i]
+			pPDate = &dates[i]
 		} else {
 			drawdown := (prices[i] - peakPrice) / peakPrice
 			if drawdown < maxDrawDown {
@@ -59,6 +62,7 @@ func CalculateMaximumDrawDown(prices []float64, dates []time.Time) (MaxDrawDownR
 	return MaxDrawDownResult{
 		MaxDrawDown: maxDrawDown,
 		TroughDate:  ddDate,
+		PeakDate:    pPDate,
 	}, nil
 }
 func CalculateMaximumDrawDownDuration(prices []float64, dates []time.Time) (MaxDrawDownDurationResult, error) {

@@ -49,10 +49,12 @@ func CalculateSingleKellyPercentage(prices []float64, dates []time.Time, riskFre
 
 	//Calculate the components for the formulas.
 	annualizedMeanReturn := stdDev.Mean * 252.0
+	// one thing to note here is we cannot predict the right return we get from this stock,
+	// so what we do is use the past historical return as a guess for the future expected return.
 	excessReturn := annualizedMeanReturn - riskFreeRate            // This is 'm'
 	annualizedVariance := math.Pow(stdDev.AnnualizedVolatility, 2) // This is 's²'
 
-	// Calculate the Kelly Percentage (f*).
+	// Calculate the Kelly Percentage (f*) = expected return from that stock / that stocks volatility square
 	kellyPercentage := excessReturn / annualizedVariance
 
 	// Calculate the Optimal Growth Rate (g) for Full Kelly.

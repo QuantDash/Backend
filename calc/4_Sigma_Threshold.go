@@ -37,6 +37,10 @@ func Calculate4SigmaThreshold(prices []float64, dates []time.Time) (SigmaThresho
 		return SigmaThreshold{}, err
 	}
 	//as i am evaluating a single day's behavior, the mathematical boundaries you build must also be based on a single day's risk.
+	// exampple: std D = 2 percent
+	//upperBound = 0.00 + (4 * 0.02) = +0.08 (+8%)
+	// lowerBound = 0.00 - (4 * 0.02) = -0.08 (-8%)
+	// The Rule: Any daily return between -8% and +8% is considered "normal enough." Anything beyond that is a 4-sigma outlier.
 	upperBound := stdDev.Mean + (4 * stdDev.StandardDeviationValue)
 	lowerBound := stdDev.Mean - (4 * stdDev.StandardDeviationValue)
 
